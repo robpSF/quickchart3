@@ -8,7 +8,7 @@ def process_data(file):
     data = pd.read_excel(file, sheet_name='opportunities')
 
     # Extract relevant columns and fix column naming issues
-    relevant_data = data[['Contact Name', 'Opportunity Name', 'Milestone', 'GBP Value', 'Close Date','Owner','Updated']]
+    relevant_data = data[['Contact Name', 'Opportunity Name', 'Milestone', 'GBP Value', 'Close Date', 'Owner', 'Updated', 'Status']]
     
     # Convert 'Close Date' to datetime
     relevant_data['Close Date'] = pd.to_datetime(relevant_data['Close Date'], errors='coerce')
@@ -23,13 +23,13 @@ def process_data(file):
     pivot_table = relevant_data.pivot_table(index=['Contact Name', 'Opportunity Name'], columns='YearMonth', values='GBP Value', aggfunc='sum', fill_value=0).reset_index()
     
     # Additional data columns to be merged
-    additional_columns = data[['Contact Name', 'Milestone', 'Owner', 'Updated']].drop_duplicates()
+    additional_columns = data[['Contact Name', 'Milestone', 'Owner', 'Updated', 'Status']].drop_duplicates()
     
     # Merge the additional columns into the pivot table
     merged_data = pd.merge(pivot_table, additional_columns, on='Contact Name', how='left')
     
     # Reorder columns to move 'LicenceChange' and 'RenewalStatus' next to 'Name'
-    cols = ['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated'] + [col for col in merged_data.columns if col not in ['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated']]
+    cols = ['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated', 'Status'] + [col for col in merged_data.columns if col not in ['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated', 'Status']]
     merged_data = merged_data[cols]
     
     return merged_data
@@ -48,7 +48,7 @@ if uploaded_file is not None:
     
     # Create a bar chart for the new data
     st.header("Bar Chart: Forecast by Year-Month")
-    merged_data_melted = merged_data.melt(id_vars=['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated'], var_name='YearMonth', value_name='GBP Value')
+    merged_data_melted = merged_data.melt(id_vars=['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated', 'Status'], var_name='YearMonth', value_name='GBP Value')
     merged_data_melted = merged_data_melted[merged_data_melted['YearMonth'].str.match(r'\d{4}-\d{2}')]
 
     pivot_table_sum = merged_data_melted.groupby('YearMonth')['GBP Value'].sum().reset_index()
