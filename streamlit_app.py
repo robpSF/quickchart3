@@ -26,7 +26,7 @@ def process_data(file):
     additional_columns = data[['Contact Name', 'Milestone', 'Owner', 'Updated','Owner']].drop_duplicates()
     
     # Merge the additional columns into the pivot table
-    merged_data = pd.merge(pivot_table, additional_columns, on='Name', how='left')
+    merged_data = pd.merge(pivot_table, additional_columns, on='Contact Name', how='left')
     
     # Reorder columns to move 'LicenceChange' and 'RenewalStatus' next to 'Name'
     cols = ['Contact Name', 'Opportunity Name', 'Milestone','Status', 'Updated'] + [col for col in merged_data.columns if col not in ['Contact Name', 'Opportunity Name', 'Milestone','Status','Updated']]
