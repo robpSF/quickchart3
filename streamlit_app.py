@@ -41,7 +41,7 @@ st.title('Forecast')
 uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
 
 if uploaded_file is not None:
-    merged_data, exceptions_output = process_data(uploaded_file)
+    merged_data = process_data(uploaded_file)
     
     st.header("Forecast")
     st.dataframe(merged_data)
