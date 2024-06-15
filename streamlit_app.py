@@ -29,7 +29,7 @@ def process_data(file):
     merged_data = pd.merge(pivot_table, additional_columns, on='Contact Name', how='left')
     
     # Reorder columns to move 'LicenceChange' and 'RenewalStatus' next to 'Name'
-    cols = ['Contact Name', 'Opportunity Name', 'Milestone','Status', 'Updated'] + [col for col in merged_data.columns if col not in ['Contact Name', 'Opportunity Name', 'Milestone','Status','Updated']]
+    cols = ['Contact Name'] + [col for col in merged_data.columns if col not in ['Contact Name', 'Opportunity Name', 'Milestone','Status','Updated']]
     merged_data = merged_data[cols]
     
     return merged_data
