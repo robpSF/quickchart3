@@ -7,29 +7,29 @@ import matplotlib.pyplot as plt
 def process_data(file):
     data = pd.read_excel(file, sheet_name='opportunities')
 
-    # Extract relevant columns
-    relevant_data = data[['Contact Name', 'Opportunity Name', 'Milestone', 'GBP Value', 'Close Date','Owner','Updated','Owner']]
+    # Extract relevant columns and fix column naming issues
+    relevant_data = data[['Contact Name', 'Opportunity Name', 'Milestone', 'GBP Value', 'Close Date','Owner','Updated']]
     
-    # Convert 'Expected_Renewal' to datetime
+    # Convert 'Close Date' to datetime
     relevant_data['Close Date'] = pd.to_datetime(relevant_data['Close Date'], errors='coerce')
     
-    # Filter out rows where Expected_Renewal is NaT
+    # Filter out rows where 'Close Date' is NaT
     relevant_data = relevant_data.dropna(subset=['Close Date'])
     
     # Create a new column with year-month format
     relevant_data['YearMonth'] = relevant_data['Close Date'].dt.strftime('%Y-%m')
     
-    # Create a pivot table with year-month as columns and names as rows, including 'Licence'
+    # Create a pivot table with year-month as columns and names as rows
     pivot_table = relevant_data.pivot_table(index=['Contact Name', 'Opportunity Name'], columns='YearMonth', values='GBP Value', aggfunc='sum', fill_value=0).reset_index()
     
     # Additional data columns to be merged
-    additional_columns = data[['Contact Name', 'Milestone', 'Owner', 'Updated','Owner']].drop_duplicates()
+    additional_columns = data[['Contact Name', 'Milestone', 'Owner', 'Updated']].drop_duplicates()
     
     # Merge the additional columns into the pivot table
     merged_data = pd.merge(pivot_table, additional_columns, on='Contact Name', how='left')
     
     # Reorder columns to move 'LicenceChange' and 'RenewalStatus' next to 'Name'
-    cols = ['Contact Name'] + [col for col in merged_data.columns if col not in ['Contact Name', 'Opportunity Name', 'Milestone','Status','Updated']]
+    cols = ['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated'] + [col for col in merged_data.columns if col not in ['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated']]
     merged_data = merged_data[cols]
     
     return merged_data
@@ -46,10 +46,9 @@ if uploaded_file is not None:
     st.header("Forecast")
     st.dataframe(merged_data)
     
-   
     # Create a bar chart for the new data
     st.header("Bar Chart: Forecast by Year-Month")
-    merged_data_melted = merged_data.melt(id_vars=['Name', 'Opportunity Name', 'Status'], var_name='YearMonth', value_name='GBP Value')
+    merged_data_melted = merged_data.melt(id_vars=['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated'], var_name='YearMonth', value_name='GBP Value')
     merged_data_melted = merged_data_melted[merged_data_melted['YearMonth'].str.match(r'\d{4}-\d{2}')]
 
     pivot_table_sum = merged_data_melted.groupby('YearMonth')['GBP Value'].sum().reset_index()
@@ -58,7 +57,7 @@ if uploaded_file is not None:
     fig, ax = plt.subplots()
     ax.bar(pivot_table_sum['YearMonth'], pivot_table_sum['GBP Value'])
     ax.set_xlabel('Year-Month')
-    ax.set_ylabel('Forcast Revenue')
+    ax.set_ylabel('Forecast Revenue')
     ax.set_title('Forecast Revenue by Year-Month')
     st.pyplot(fig)
     
