@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 # Function to process data and create the table and exceptions
 def process_data(file):
-    data = pd.read_excel(file, sheet_name='contacts')
+    data = pd.read_excel(file, sheet_name='opportunities')
 
     # Extract relevant columns
     relevant_data = data[['Contact Name', 'Opportunity Name', 'Milestone', 'GBP Value', 'Close Date','Owner','Updated','Owner']]
