@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import io
 import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
 
 # Function to process data and create the table and exceptions
 def process_data(file):
@@ -10,8 +11,9 @@ def process_data(file):
     # Extract relevant columns and fix column naming issues
     relevant_data = data[['Contact Name', 'Opportunity Name', 'Milestone', 'GBP Value', 'Close Date', 'Owner', 'Updated', 'Status']]
     
-    # Convert 'Close Date' to datetime
+    # Convert 'Close Date' and 'Updated' to datetime
     relevant_data['Close Date'] = pd.to_datetime(relevant_data['Close Date'], errors='coerce')
+    relevant_data['Updated'] = pd.to_datetime(relevant_data['Updated'], errors='coerce')
     
     # Filter out rows where 'Close Date' is NaT
     relevant_data = relevant_data.dropna(subset=['Close Date'])
@@ -23,13 +25,17 @@ def process_data(file):
     pivot_table = relevant_data.pivot_table(index=['Contact Name', 'Opportunity Name'], columns='YearMonth', values='GBP Value', aggfunc='sum', fill_value=0).reset_index()
     
     # Additional data columns to be merged
-    additional_columns = data[['Contact Name', 'Milestone', 'Owner', 'Updated', 'Status']].drop_duplicates()
+    additional_columns = relevant_data[['Contact Name', 'Milestone', 'Owner', 'Updated', 'Status']].drop_duplicates()
     
     # Merge the additional columns into the pivot table
     merged_data = pd.merge(pivot_table, additional_columns, on='Contact Name', how='left')
     
+    # Add Alert column based on Updated date
+    seven_days_ago = datetime.now() - timedelta(days=7)
+    merged_data['Alert'] = merged_data['Updated'].apply(lambda x: '!' if x < seven_days_ago else '')
+    
     # Reorder columns to move 'LicenceChange' and 'RenewalStatus' next to 'Name'
-    cols = ['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated', 'Status'] + [col for col in merged_data.columns if col not in ['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated', 'Status']]
+    cols = ['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated', 'Status', 'Alert'] + [col for col in merged_data.columns if col not in ['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated', 'Status', 'Alert']]
     merged_data = merged_data[cols]
     
     return merged_data
@@ -48,7 +54,7 @@ if uploaded_file is not None:
     
     # Create a bar chart for the new data
     st.header("Bar Chart: Forecast by Year-Month")
-    merged_data_melted = merged_data.melt(id_vars=['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated', 'Status'], var_name='YearMonth', value_name='GBP Value')
+    merged_data_melted = merged_data.melt(id_vars=['Contact Name', 'Opportunity Name', 'Milestone', 'Owner', 'Updated', 'Status', 'Alert'], var_name='YearMonth', value_name='GBP Value')
     merged_data_melted = merged_data_melted[merged_data_melted['YearMonth'].str.match(r'\d{4}-\d{2}')]
 
     pivot_table_sum = merged_data_melted.groupby('YearMonth')['GBP Value'].sum().reset_index()
